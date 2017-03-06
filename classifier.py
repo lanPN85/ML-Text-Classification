@@ -11,13 +11,16 @@ import numpy as np
 
 class Classifier:
     def __init__(self, word_vec, word_to_index, index_to_word, classes, title_output=128, content_output=512,
-                 dense_neurons=(1024, 256,), title_len=50, content_len=2000):
+                 dense_neurons=(1024, 256,), title_len=50, content_len=2000, weights=None):
         self.word_to_index = word_to_index
         self.index_to_word = index_to_word
-        self.word_vec = word_vec
         self.title_len = title_len
         self.content_len = content_len
+        self.word_vec = word_vec
         self.classes = classes
+        self.title_output = title_output
+        self.content_output = content_output
+        self.dense_neurons = dense_neurons
 
         # Encode document's title
         title_inp = Input(shape=(title_len,), name='Title_Input')
@@ -38,16 +41,18 @@ class Classifier:
         content_vec = self.c_encoder(content_inp)
 
         # Merge vectors to create output
-        merged = merge(inputs=[title_vec, content_vec], mode='concat')
+        doc_vec = merge(inputs=[title_vec, content_vec], mode='concat')
         self.decoder = Sequential(name='Decoder')
         self.decoder.add(Dense(dense_neurons[0], input_shape=(title_output + content_output,),
                                name='Dense_0', activation='hard_sigmoid'))
         for i, n in enumerate(dense_neurons[1:]):
             self.decoder.add(Dense(n, activation='hard_sigmoid', name='Dense_%s' % (i+1)))
         self.decoder.add(Dense(len(classes), activation='softmax', name='Dense_Output'))
-        output = self.decoder(merged)
+        output = self.decoder(doc_vec)
 
         self.model = Model(input=[title_inp, content_inp], output=output, name='Model')
+        if weights is not None:
+            self.model.load_weights(weights)
 
     def compile(self, optimizer=Adadelta, learning_rate=0.0001):
         self.model.compile(loss='categorical_crossentropy', optimizer=optimizer(lr=learning_rate), metrics=['accuracy'])
