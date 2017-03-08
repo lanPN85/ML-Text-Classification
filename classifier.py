@@ -1,17 +1,20 @@
 from keras.layers.recurrent import GRU
-from keras.layers.core import Dense, Merge
+from keras.layers.core import Dense
 from keras.engine import merge
 from keras.layers.embeddings import Embedding
-from keras.optimizers import Adadelta
+from keras.optimizers import RMSprop
 from keras.models import Model, Sequential
 from keras.layers import Input
+from keras.callbacks import Callback
 
+import utils
 import numpy as np
 
 
 class Classifier:
     def __init__(self, word_vec, word_to_index, index_to_word, classes, title_output=128, content_output=512,
-                 dense_neurons=(1024, 256,), title_len=50, content_len=2000, weights=None):
+                 dense_neurons=(1024, 256,), title_len=50, content_len=2000, weights=None, directory='.'):
+        self.directory = directory
         self.word_to_index = word_to_index
         self.index_to_word = index_to_word
         self.title_len = title_len
@@ -54,6 +57,39 @@ class Classifier:
         if weights is not None:
             self.model.load_weights(weights)
 
-    def compile(self, optimizer=Adadelta, learning_rate=0.0001):
+    def log(self, str, out=True):
+        with open(self.directory + '/log.txt', 'at') as f:
+            f.write(str)
+        if out:
+            print(str)
+
+    def compile(self, optimizer=RMSprop, learning_rate=0.0001):
         self.model.compile(loss='categorical_crossentropy', optimizer=optimizer(lr=learning_rate), metrics=['accuracy'])
 
+    def train(self, Xt, Xc, y, nb_epoch, batch_size=20):
+        cb1 = SaveCallback(self)
+        self.model.fit([Xt, Xc], y, nb_epoch=nb_epoch, batch_size=batch_size,
+                       callbacks=[cb1], validation_split=0.2, shuffle=True)
+
+
+class SaveCallback(Callback):
+    def __init__(self, classifier):
+        self.classifier = classifier
+        super(SaveCallback, self).__init__()
+
+    def on_epoch_end(self, epoch, logs=None):
+        utils.save_classifier(self.classifier, self.classifier.directory)
+
+
+class TestCallback(Callback):
+    def __init__(self, classifier, Xt, Xc, y):
+        self.classifier = classifier
+        self.Xt = Xt
+        self.Xc = Xc
+        self.y = y
+        super(TestCallback, self).__init__()
+
+    def on_epoch_end(self, epoch, logs=None):
+        print('Evaluating on test set...')
+        result = self.classifier.model.evaluate([self.Xt, self.Xc], self.y, batch_size=np.size(self.y, 0))
+        self.classifier.log('Test loss: %s --- Test acc: %s' % (result[0], result[1]))

@@ -1,5 +1,6 @@
 from keras.utils.np_utils import to_categorical
 from classifier import *
+
 import pickle
 import sys
 import numpy as np
@@ -51,7 +52,7 @@ def load_classifier(directory, cls=Classifier):
         print('Done.')
         return cls(word_vec, word_to_index, index_to_word, config['classes'], title_output=config['title_output'],
                    content_output=config['content_output'], dense_neurons=config['dense_neurons'],
-                   title_len=config['title_len'], content_len=config['content_len'], weights=f1)
+                   title_len=config['title_len'], content_len=config['content_len'], weights=f1, directory=directory)
     except FileNotFoundError:
         print('One or more model files cannot be found. Terminating...')
         sys.exit()
