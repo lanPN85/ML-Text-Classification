@@ -1,5 +1,4 @@
 from keras.utils.np_utils import to_categorical
-from classifier import *
 
 import pickle
 import sys
@@ -35,10 +34,10 @@ def save_classifier(classifier, directory):
     pickle.dump(config, open(f2, 'wb'), pickle.HIGHEST_PROTOCOL)
     np.savez(f3, wit=classifier.word_to_index, itw=classifier.index_to_word,
              wv=classifier.word_vec)
-    print('Saved model to %s' % directory)
+    print('Saved model to %s.' % directory)
 
 
-def load_classifier(directory, cls=Classifier):
+def load_classifier(directory, cls):
     f1 = directory + '/weights.hdf5'
     f2 = directory + '/config.pkl'
     f3 = directory + '/dictionary.npz'
