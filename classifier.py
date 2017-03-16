@@ -5,7 +5,7 @@ from keras.layers.embeddings import Embedding
 from keras.optimizers import RMSprop
 from keras.models import Model, Sequential
 from keras.layers import Input
-from keras.callbacks import Callback, EarlyStopping
+from keras.callbacks import Callback, EarlyStopping, CSVLogger
 from keras.regularizers import WeightRegularizer
 
 import utils
@@ -27,6 +27,8 @@ class Classifier:
         self.title_output = title_output
         self.content_output = content_output
         self.dense_neurons = dense_neurons
+        self.gru_regularize = gru_regularize
+        self.dense_regularize = dense_regularize
 
         # Encode document's title
         title_inp = Input(shape=(title_len,), name='Title_Input')
@@ -39,7 +41,7 @@ class Classifier:
         title_vec = self.t_encoder(title_inp)
 
         # Encode document's content
-        content_inp = Input(shape=(content_len, ), name='Content_Input')
+        content_inp = Input(shape=(content_len,), name='Content_Input')
         content_embed = Embedding(input_dim=np.size(word_vec, 0), output_dim=np.size(word_vec, 1),
                                   weights=[word_vec], mask_zero=True, name='Content_Embedding')
         self.c_encoder = Sequential(name='Content_Encoder')
@@ -54,7 +56,7 @@ class Classifier:
         self.decoder.add(Dense(dense_neurons[0], input_shape=(title_output + content_output,),
                                name='Dense_0', activation='hard_sigmoid'))
         for i, n in enumerate(dense_neurons[1:]):
-            self.decoder.add(Dense(n, activation='hard_sigmoid', name='Dense_%s' % (i+1),
+            self.decoder.add(Dense(n, activation='hard_sigmoid', name='Dense_%s' % (i + 1),
                                    W_regularizer=WeightRegularizer(l2=dense_regularize)))
         self.decoder.add(Dense(len(classes), activation='softmax', name='Dense_Output',
                                W_regularizer=WeightRegularizer(l2=dense_regularize)))
@@ -66,45 +68,81 @@ class Classifier:
 
     def log(self, str, out=True):
         with open(self.directory + '/log.txt', 'at') as f:
-            f.write(str)
+            f.write(str + '\n')
             f.close()
         if out:
             print(str)
 
     def compile(self, optimizer=RMSprop, learning_rate=0.0001):
-        self.model.compile(loss='categorical_crossentropy', optimizer=optimizer(lr=learning_rate), metrics=['accuracy'])
+        self.model.compile(loss='categorical_crossentropy', optimizer=optimizer(lr=learning_rate),
+                           metrics=['accuracy'])
 
-    def train(self, matrices, nb_epoch, batch_size=20):
-        cb1 = SaveCallback(self)
-        cb2 = EarlyStopping(verbose=1, patience=2)
-        self.model.fit([matrices['Xt_train'], matrices['Xc_train']], matrices['y_train'], nb_epoch=nb_epoch, batch_size=batch_size,
-                       callbacks=[cb1, cb2], shuffle=True, validation_data=([matrices['Xt_test'], matrices['Xc_test']], matrices['y_test']))
+    def train(self, matrices, nb_epoch, prev_val_acc=0.0, batch_size=20):
+        cb1 = SaveCallback(self, prev_val_acc)
+        cb2 = EarlyStopping(monitor='val_loss', verbose=1, patience=4, mode='auto')
+        cb3 = EarlyStopping(monitor='loss', verbose=1, patience=0, mode='auto')
+        cb4 = CSVLogger(self.directory + '/epochs.csv', append=True)
+        cb5 = TestCallback(self, matrices['Xt_test'], matrices['Xc_test'], matrices['y_test'])
+        history = self.model.fit([matrices['Xt_train'], matrices['Xc_train']], matrices['y_train'], nb_epoch=nb_epoch,
+                                 batch_size=batch_size, callbacks=[cb1, cb2, cb3, cb4, cb5], shuffle=True,
+                                 validation_data=([matrices['Xt_val'], matrices['Xc_val']], matrices['y_val']))
+        return cb1.best_val_acc, history
 
     def predict(self, title, content):
         t = nltk.word_tokenize(title.lower())
-        Xt = [self.index_to_word[self.word_to_index[word]] if word in self.word_to_index
-              else self.index_to_word[self.word_to_index[utils.UNKNOWN_TOKEN]] for word in t]
+        Xt = [self.word_to_index[word] if word in self.word_to_index
+              else self.word_to_index[utils.UNKNOWN_TOKEN] for word in t][:self.title_len]
         c = nltk.word_tokenize(content.lower())
-        Xc = [self.index_to_word[self.word_to_index[word]] if word in self.word_to_index
-              else self.index_to_word[self.word_to_index[utils.UNKNOWN_TOKEN]] for word in c]
+        Xc = [self.word_to_index[word] if word in self.word_to_index
+              else self.word_to_index[utils.UNKNOWN_TOKEN] for word in c][:self.content_len]
+
+        Xt = utils.pad_vec(Xt, self.title_len)
+        Xc = utils.pad_vec(Xc, self.content_len)
 
         probs = self.model.predict([Xt, Xc])
         pred = np.argmax(probs)
         return pred, probs
 
+    def evaluate(self, Xt, Xc, y):
+        probs = self.model.predict([Xt, Xc])
+        preds = np.argmax(probs, axis=1)
+        true = np.argmax(y, 1)
+        acc = np.sum(np.equal(preds, true)) / np.size(true, 0)
+        p, r, f1 = [], [], []
+        for i in range(len(self.classes)):
+            p.append(utils.precision(preds, true, i))
+            r.append(utils.recall(preds, true, i))
+            f1.append(utils.f1_score(p[i], r[i]))
+        p.append(np.mean(p))
+        r.append(np.mean(r))
+        f1.append(np.mean(f1))
+        return acc, p, r, f1
+
 
 class SaveCallback(Callback):
-    def __init__(self, classifier):
+    def __init__(self, classifier, prev_val_acc):
         self.best_loss = 1000.0
+        self.best_val_loss = 1000.0
+        self.best_val_acc = prev_val_acc
         self.classifier = classifier
         super(SaveCallback, self).__init__()
 
     def on_epoch_end(self, epoch, logs=None):
-        if logs['val_loss'] <= self.best_loss:
+        print()
+        if logs['val_loss'] <= self.best_val_loss and logs['loss'] <= self.best_loss and logs['val_acc'] >= self.best_val_acc:
             utils.save_classifier(self.classifier, self.classifier.directory)
-            self.best_loss = logs['val_loss']
-        else:
+            self.best_val_loss = logs['val_loss']
+            self.best_loss = logs['loss']
+            self.best_val_acc = logs['val_acc']
+
+            self.classifier.log('Save point:\nLoss: %s\tAccuracy: %s\n' % (logs['loss'], logs['acc']) +
+                                'Validation loss: %s\tValidation accuracy: %s\n' % (logs['val_loss'], logs['val_acc']))
+        elif logs['val_loss'] > self.best_val_loss:
             print('No improvement on validation loss. Skipping save...')
+        elif logs['loss'] > self.best_loss:
+            print('No improvement on loss. Skipping save...')
+        else:
+            print('No improvement on validation accuracy. Skipping save...')
 
 
 class TestCallback(Callback):
@@ -117,5 +155,7 @@ class TestCallback(Callback):
 
     def on_train_end(self, logs=None):
         print('Evaluating on test set...')
-        result = self.classifier.model.evaluate([self.Xt, self.Xc], self.y, batch_size=np.size(self.y, 0))
-        self.classifier.log('Test loss: %s --- Test acc: %s' % (result[0], result[1]))
+        result = self.classifier.model.evaluate([self.Xt, self.Xc], self.y, batch_size=10)
+        self.classifier.log('GRU_Regularizer: %s --- Dense Regularizer: %s' %
+                            (self.classifier.gru_regularize, self.classifier.dense_regularize))
+        self.classifier.log('Test loss: %s --- Test acc: %s\n' % (result[0], result[1]))

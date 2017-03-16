@@ -12,19 +12,20 @@ def load_embedding(vocabulary_size):
     embed = Glove.load_stanford('data/glove.6B.100d.txt')
     embed_layer = np.asarray(embed.word_vectors[:vocabulary_size, :], dtype=np.float32)
     index_to_word = list(embed.inverse_dictionary.values())
-    index_to_word.insert(0, utils.MASK_TOKEN)
     index_to_word = index_to_word[:vocabulary_size]
-    word_to_index = dict([(w, i) for i, w in enumerate(index_to_word)])
-
-    word_count = len(index_to_word)
+    index_to_word.insert(0, utils.MASK_TOKEN)
     index_to_word.append(utils.UNKNOWN_TOKEN)
-    word_to_index[utils.UNKNOWN_TOKEN] = word_count + 1
+    word_to_index = dict([(w, i) for i, w in enumerate(index_to_word)])
 
     word_dim = np.size(embed_layer, 1)
     # Vector for the MASK token
     embed_layer = np.vstack((np.zeros((1, word_dim), dtype=np.float32), embed_layer))
     # Random vector for UNKNOWN_TOKEN, placed intentionally far away from vocabulary words
     embed_layer = np.vstack((embed_layer, np.asarray(np.random.uniform(20.0, 50.0, (1, word_dim)), dtype=np.float32)))
+
+    assert np.size(embed_layer, 0) == vocabulary_size + 2
+    assert len(index_to_word) == vocabulary_size + 2
+    assert word_to_index[utils.UNKNOWN_TOKEN] == vocabulary_size + 1
 
     return embed_layer, word_to_index, index_to_word
 
@@ -45,24 +46,26 @@ def _load_csv(filename, title_len, content_len):
     return doc_list
 
 
-def strat_sample(doc_list, class_count, train_ratio=0.7):
-    s = ([],) * class_count
-    train_docs, test_docs = [], []
+def strat_sample(doc_list, class_count, train_ratio=0.8):
+    s = [[]] * class_count
+    train_docs, val_docs = [], []
     for doc in doc_list:
-        s[doc['class']].append(doc)
+        tmp = s[doc['class']].copy()
+        tmp.append(doc)
+        s[doc['class']] = tmp
 
     for d in s:
         random.shuffle(d)
         train_split = int(len(d) * train_ratio)
         train_docs.extend(d[:train_split])
-        test_docs.extend(d[train_split:])
+        val_docs.extend(d[train_split:])
 
     random.shuffle(train_docs)
-    random.shuffle(test_docs)
-    return train_docs, test_docs
+    random.shuffle(val_docs)
+    return train_docs, val_docs
 
 
-def _get_mat(doc_list, word_to_index, word_vec, title_len, content_len, compress_labels=False):
+def _get_mat(doc_list, word_to_index, title_len, content_len, compress_labels=False):
     y = []
     Xt = np.zeros((len(doc_list), title_len), dtype=np.float32)
     Xc = np.zeros((len(doc_list), content_len), dtype=np.float32)
@@ -94,32 +97,7 @@ def _get_mat(doc_list, word_to_index, word_vec, title_len, content_len, compress
     return Xt, Xc, y, unk, total
 
 
-def load_ag_news(vocabulary_size, title_len, content_len, path='./data/ag_news_csv'):
-    with open(path + '/classes.txt', 'rt') as f:
-        classes = f.readlines()
-        for i in range(len(classes)):
-            classes[i] = classes[i].rstrip()
-        f.close()
-
-    embed_layer, word_to_index, index_to_word = load_embedding(vocabulary_size)
-    train_docs = _load_csv(path + '/train.csv', title_len, content_len)
-    Xt_train, Xc_train, y_train, unk1, total1 = _get_mat(train_docs, word_to_index, embed_layer, title_len, content_len)
-    test_docs = _load_csv(path + '/test.csv', title_len, content_len)
-    Xt_test, Xc_test, y_test, unk2, total2 = _get_mat(test_docs, word_to_index, embed_layer, title_len, content_len)
-
-    print('%d unknown tokens / %d tokens' % (unk1 + unk2, total1 + total2))
-    print('Unknown token ratio: %s%%' % ((unk1 + unk2)*100 / (total1 + total2)))
-
-    matrices = {'Xt_train': Xt_train,
-                'Xc_train': Xc_train,
-                'y_train': y_train,
-                'Xt_test': Xt_test,
-                'Xc_test': Xc_test,
-                'y_test': y_test}
-    return matrices, embed_layer, word_to_index, index_to_word, classes
-
-
-def load_bbc(vocabulary_size, title_len, content_len, path='./data/bbc_csv'):
+def load_generic(vocabulary_size, title_len, content_len, path):
     with open(path + '/classes.txt', 'rt') as f:
         classes = f.readlines()
         for i in range(len(classes)):
@@ -128,20 +106,27 @@ def load_bbc(vocabulary_size, title_len, content_len, path='./data/bbc_csv'):
 
     embed_layer, word_to_index, index_to_word = load_embedding(vocabulary_size)
     docs = _load_csv(path + '/train.csv', title_len, content_len)
-    print('Parsed %s documents.' % len(docs))
-    train_docs, test_docs = strat_sample(docs, len(classes), train_ratio=0.7)
-    Xt_train, Xc_train, y_train, unk1, total1 = _get_mat(train_docs, word_to_index, embed_layer, title_len, content_len)
-    Xt_test, Xc_test, y_test, unk3, total3 = _get_mat(test_docs, word_to_index, embed_layer, title_len, content_len)
+    train_docs, val_docs = strat_sample(docs, len(classes))
+    test_docs = _load_csv(path + '/test.csv', title_len, content_len)
 
-    unk, total = unk1 + unk3, total1 + total3
+    Xt_train, Xc_train, y_train, unk1, total1 = _get_mat(train_docs, word_to_index, title_len, content_len)
+    Xt_val, Xc_val, y_val, unk2, total2 = _get_mat(val_docs, word_to_index, title_len, content_len)
+    Xt_test, Xc_test, y_test, unk3, total3 = _get_mat(test_docs, word_to_index, title_len, content_len)
+
+    unk, total = unk1 + unk2 + unk3, total1 + total2 + total3
     print('%d unknown tokens / %d tokens' % (unk, total))
     print('Unknown token ratio: %s%%' % (unk * 100 / total))
 
-    matrices = {'Xt_train': Xt_train,
-                'Xc_train': Xc_train,
-                'y_train': y_train,
-                'Xt_test': Xt_test,
-                'Xc_test': Xc_test,
-                'y_test': y_test,
+    matrices = {'Xt_train': Xt_train, 'Xc_train': Xc_train, 'y_train': y_train,
+                'Xc_val': Xc_val, 'Xt_val': Xt_val, 'y_val': y_val,
+                'Xt_test': Xt_test, 'Xc_test': Xc_test, 'y_test': y_test,
                 }
     return matrices, embed_layer, word_to_index, index_to_word, classes
+
+
+def load_ag_news(vocabulary_size, title_len, content_len):
+    return load_generic(vocabulary_size, title_len, content_len, './data/ag_news_csv')
+
+
+def load_bbc(vocabulary_size, title_len, content_len):
+    return load_generic(vocabulary_size, title_len, content_len, './data/bbc_csv')

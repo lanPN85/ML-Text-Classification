@@ -4,6 +4,10 @@ import pickle
 import sys
 import numpy as np
 
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
 MASK_TOKEN = 'MASK_TOKEN'
 UNKNOWN_TOKEN = 'UNKNOWN_TOKEN'
 
@@ -17,6 +21,13 @@ def batch_generator(Xt_train, Xc_train, y_train, nb_class, total_len, batch_size
             yield ([Xt, Xc], y)
 
 
+def pad_vec(vec, length):
+    r = np.zeros((1, length))
+    for i, v in enumerate(vec):
+        r[0][i] = v
+    return r
+
+
 def save_classifier(classifier, directory):
     f1 = directory + '/weights.hdf5'
     f2 = directory + '/config.pkl'
@@ -28,7 +39,9 @@ def save_classifier(classifier, directory):
               'title_len': classifier.title_len,
               'content_len': classifier.content_len,
               'classes': classifier.classes,
-              'word_vec_dim': np.shape(classifier.word_vec)}
+              'word_vec_dim': np.shape(classifier.word_vec),
+              'gru_reg': classifier.gru_regularize,
+              'dense_reg': classifier.dense_regularize}
 
     classifier.model.save_weights(f1)
     pickle.dump(config, open(f2, 'wb'), pickle.HIGHEST_PROTOCOL)
@@ -51,7 +64,53 @@ def load_classifier(directory, cls):
         print('Done.')
         return cls(word_vec, word_to_index, index_to_word, config['classes'], title_output=config['title_output'],
                    content_output=config['content_output'], dense_neurons=config['dense_neurons'],
-                   title_len=config['title_len'], content_len=config['content_len'], weights=f1, directory=directory)
+                   title_len=config['title_len'], content_len=config['content_len'], weights=f1, directory=directory,
+                   gru_regularize=config['gru_reg'] if 'gru_reg' in config else 0,
+                   dense_regularize=config['dense_reg'] if 'dense_reg' in config else 0)
     except FileNotFoundError:
         print('One or more model files cannot be found. Terminating...')
         sys.exit()
+
+
+def plot_training(path, history, gru_lambda, dense_lambda):
+    plt.title('Model Loss')
+    plt.ylabel('Loss')
+    plt.xlabel('Epoch')
+    plt.plot(history.history['loss'])
+    plt.plot(history.history['val_loss'])
+    plt.legend(['Training set', 'Validation set'], loc='uppers right')
+    plt.savefig(path + '/loss_%s_%s.png' % (gru_lambda, dense_lambda))
+    plt.close()
+
+    plt.title('Model Accuracy')
+    plt.ylabel('Accuracy')
+    plt.xlabel('Epoch')
+    plt.plot(history.history['acc'])
+    plt.plot(history.history['val_acc'])
+    plt.legend(['Training set', 'Validation set'], loc='lower right')
+    plt.savefig(path + '/acc_%s_%s.png' % (gru_lambda, dense_lambda))
+    plt.close()
+
+
+def precision(preds, true, label):
+    true_pos, total_pos = 0.0, 0.0
+    for i in range(len(true)):
+        if preds[i] == label:
+            total_pos += 1.0
+            if true[i] == label:
+                true_pos += 1.0
+    return true_pos/total_pos
+
+
+def recall(preds, true, label):
+    true_pos, total_pos = 0.0, 0.0
+    for i in range(len(true)):
+        if true[i] == label:
+            total_pos += 1.0
+            if preds[i] == label:
+                true_pos += 1.0
+    return true_pos / total_pos
+
+
+def f1_score(p, r):
+    return 2 * p * r / (p + r)
