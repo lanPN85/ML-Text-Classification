@@ -78,7 +78,7 @@ def plot_training(path, history, gru_lambda, dense_lambda):
     plt.xlabel('Epoch')
     plt.plot(history.history['loss'])
     plt.plot(history.history['val_loss'])
-    plt.legend(['Training set', 'Validation set'], loc='uppers right')
+    plt.legend(['Training set', 'Validation set'], loc='upper right')
     plt.savefig(path + '/loss_%s_%s.png' % (gru_lambda, dense_lambda))
     plt.close()
 
