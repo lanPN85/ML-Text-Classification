@@ -30,7 +30,7 @@ def load_embedding(vocabulary_size):
     return embed_layer, word_to_index, index_to_word
 
 
-def _load_csv(filename, title_len, content_len):
+def load_csv(filename, title_len, content_len):
     print('Reading %s...' % filename)
     f = open(filename, 'rt')
     reader = csv.reader(f, delimiter=',', quotechar='"')
@@ -65,7 +65,7 @@ def strat_sample(doc_list, class_count, train_ratio=0.8):
     return train_docs, val_docs
 
 
-def _get_mat(doc_list, word_to_index, title_len, content_len, compress_labels=False):
+def get_mat(doc_list, word_to_index, title_len, content_len, compress_labels=False):
     y = []
     Xt = np.zeros((len(doc_list), title_len), dtype=np.float32)
     Xc = np.zeros((len(doc_list), content_len), dtype=np.float32)
@@ -105,13 +105,13 @@ def load_generic(vocabulary_size, title_len, content_len, path):
         f.close()
 
     embed_layer, word_to_index, index_to_word = load_embedding(vocabulary_size)
-    docs = _load_csv(path + '/train.csv', title_len, content_len)
+    docs = load_csv(path + '/train.csv', title_len, content_len)
     train_docs, val_docs = strat_sample(docs, len(classes))
-    test_docs = _load_csv(path + '/test.csv', title_len, content_len)
+    test_docs = load_csv(path + '/test.csv', title_len, content_len)
 
-    Xt_train, Xc_train, y_train, unk1, total1 = _get_mat(train_docs, word_to_index, title_len, content_len)
-    Xt_val, Xc_val, y_val, unk2, total2 = _get_mat(val_docs, word_to_index, title_len, content_len)
-    Xt_test, Xc_test, y_test, unk3, total3 = _get_mat(test_docs, word_to_index, title_len, content_len)
+    Xt_train, Xc_train, y_train, unk1, total1 = get_mat(train_docs, word_to_index, title_len, content_len)
+    Xt_val, Xc_val, y_val, unk2, total2 = get_mat(val_docs, word_to_index, title_len, content_len)
+    Xt_test, Xc_test, y_test, unk3, total3 = get_mat(test_docs, word_to_index, title_len, content_len)
 
     unk, total = unk1 + unk2 + unk3, total1 + total2 + total3
     print('%d unknown tokens / %d tokens' % (unk, total))

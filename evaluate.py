@@ -1,4 +1,3 @@
-import utils
 import sys
 
 from data_utils import *
@@ -6,19 +5,17 @@ from classifier import *
 
 path, dataset = sys.argv[1], sys.argv[2]
 
-if dataset == 'ag_news':
-    loader = load_ag_news
-elif dataset == 'bbc':
-    loader = load_bbc
-else:
-    raise ValueError('Invalid dataset')
+if dataset == 'bbc':
+    dataset = 'data/bbc_csv/test.csv'
+elif dataset == 'ag_news':
+    dataset = 'data/ag_news_csv/test.csv'
 
 classifier = utils.load_classifier(path, Classifier)
-matrices, word_vec, word_to_index, index_to_word, classes = loader(len(classifier.index_to_word)-2,
-                                                                   classifier.title_len,
-                                                                   classifier.content_len)
+doc_list = load_csv(dataset, classifier.title_len, classifier.content_len)
+Xt, Xc, y, unk, total = get_mat(doc_list, classifier.word_to_index, classifier.title_len,
+                                classifier.content_len)
 print('Evaluating...')
-acc, p, r, f1 = classifier.evaluate(matrices['Xt_test'], matrices['Xc_test'], matrices['y_test'])
+acc, p, r, f1 = classifier.evaluate(Xt, Xc, y)
 for i in range(len(p)-1):
     print('Precision @ label %s (%s): %s' % (i, classifier.classes[i], p[i]))
     print('Recall @ label %s (%s): %s' % (i, classifier.classes[i], r[i]))

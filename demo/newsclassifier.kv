@@ -1,0 +1,192 @@
+
+<NormLabel@Label>:
+    font_size: '16sp'
+    text_size: self.size
+    size_hint: 1, None
+    height: 28
+    color: 0,0,0,1
+
+<Root>:
+    title_inp: title_in
+    content_inp: content_in
+    model_desc: model_desc
+    pred_res: result
+    graph: graph
+    chooser: fc
+    config: conf
+
+    canvas.before:
+        Color:
+            rgba: 1, 1, 1, 1
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    orientation: 'horizontal'
+    padding: 5
+    spacing: 10
+
+    BoxLayout:
+        canvas.before:
+            Color:
+                rgba: 0, 0, 0, 1
+            Rectangle:
+                pos: self.pos
+                size: self.size
+        padding: 1
+        size_hint_x: 0.6
+        size_hint_y: 1
+
+        BoxLayout:
+            canvas.before:
+                Color:
+                    rgba: 1, 1, 1, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+            id: doc_inp
+            orientation: 'vertical'
+            padding: 5
+            spacing: 3
+
+            Image:
+                source: './header.png'
+                size_hint: 1, None
+                mipmap: True
+                height: 80
+
+            NormLabel:
+                text: 'Article Title'
+                bold: True
+                halign: 'left'
+
+            TextInput:
+                id: title_in
+                hint_text: 'The article\'s title. Recommended for accuracy.'
+                font_size: '14sp'
+                multiline: False
+                size_hint: 1, None
+                height: 28
+
+            NormLabel:
+                text: 'Article Content'
+                bold: True
+                halign: 'left'
+
+            ScrollView:
+                id: scrlv
+                TextInput:
+                    size_hint: 1, None
+                    id: content_in
+                    hint_text: 'The article\'s content.'
+                    font_size: '14sp'
+                    height: max(self.minimum_height, scrlv.height)
+
+            StackLayout:
+                size_hint: 1, None
+                height: 30
+                orientation: 'rl-bt'
+
+                Button:
+                    size_hint: None, None
+                    width: 120
+                    height: 30
+                    text: 'Classify'
+                    font_size: '15sp'
+                    on_press: app.get_prediction()
+
+                Button:
+                    size_hint: None, None
+                    width: 120
+                    height: 30
+                    text: 'Clear'
+                    font_size: '15sp'
+                    on_press: app.clear_text()
+
+
+    StackLayout:
+        padding: 5
+        size_hint: 0.4, 1
+        orientation: 'lr-tb'
+        spacing: 5
+
+        FileChooser:
+            id: fc
+            dirselect: True
+            size_hint: 1, None
+            multiselect: False
+            path: '.'
+            height: 200
+            FileChooserListLayout:
+                canvas.before:
+                    Color:
+                        rgba: 0.23, 0.27, 0.28, 1
+                    Rectangle:
+                        pos: self.pos
+                        size: self.size
+
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint: 1, None
+            spacing: 2
+            height: 30
+
+            NormLabel:
+                text: 'Model: '
+                size_hint: None, 1
+                valign: 'middle'
+                width: 50
+
+            TextInput:
+                id: model_desc
+                size_hint: 0.1, 1
+                readonly: True
+                hint_text: 'The prediction model\'s name'
+
+            Button:
+                size_hint: None, 1
+                valign: 'middle'
+                width: 50
+                text: 'Load'
+                font_size: '15sp'
+                on_press: app.load_classifier()
+
+        ScrollView:
+            id: scrlv2
+            size_hint: 1, None
+            height: 90
+
+            TextInput:
+                id: conf
+                readonly: True
+                size_hint: 1, None
+                height: max(self.minimum_height, scrlv2.height)
+                hint_text: 'Load a model to view its details'
+
+        BoxLayout:
+            orientation: 'horizontal'
+            size_hint: 1, None
+            spacing: 2
+            height: 30
+
+            NormLabel:
+                text: 'Prediction result:'
+                bold: True
+                halign: 'left'
+                valign: 'middle'
+                size_hint: None, None
+                width: 135
+
+            TextInput:
+                id: result
+                multiline: False
+                readonly: True
+                hint_text: 'Prediction result shows up here'
+
+        Image:
+            size_hint: 1, 0.55
+            allow_stretch: True
+            id: graph
+            source: 'default_graph.png'
+            mipmap: True
+
+Root
