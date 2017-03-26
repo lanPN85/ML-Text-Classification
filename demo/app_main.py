@@ -90,9 +90,13 @@ class NewsClassifier(App):
         self.root.model_desc.text = name
 
 
-if __name__ == '__main__':
+def run():
     Config.set('graphics', 'width', '1600')
     Config.set('graphics', 'height', '900')
     Config.set('graphics', 'minimum_width', '1600')
     Config.set('graphics', 'minimum_height', '900')
     NewsClassifier().run()
+
+
+if __name__ == '__main__':
+    run()
