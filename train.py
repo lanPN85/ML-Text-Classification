@@ -3,6 +3,7 @@ import sys
 import datetime
 import os
 
+from timeit import default_timer as timer
 from keras.optimizers import *
 from data_utils import *
 from classifier import Classifier
@@ -13,6 +14,8 @@ if DATASET == 'ag_news':
     loader = load_ag_news
 elif DATASET == 'bbc':
     loader = load_bbc
+elif DATASET == 'reuters':
+    loader = load_reuters
 else:
     raise ValueError('Invalid dataset')
 
@@ -28,7 +31,7 @@ if not os.path.exists(DIRECTORY):
 copy2('./settings.py', '%s/settings.py' % DIRECTORY)
 
 matrices, word_vec, word_to_index, index_to_word, classes = loader(VOCABULARY_SIZE, TITLE_LEN, CONTENT_LEN)
-best_val = 0.0
+best_val, start_time = 0.0, timer()
 for gru_lambda in GRU_LAMBDA:
     for dense_lambda in DENSE_LAMBDA:
         print('Training with regularization: %s %s' % (gru_lambda, dense_lambda))
@@ -45,3 +48,6 @@ for gru_lambda in GRU_LAMBDA:
             best_val = prev_val
         print('Plotting history...')
         utils.plot_training(DIRECTORY + '/plots', history, gru_lambda, dense_lambda)
+
+elapsed = timer() - start_time
+print('Training complete in %s seconds' % str(datetime.timedelta(seconds=elapsed)))

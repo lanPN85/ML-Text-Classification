@@ -9,11 +9,13 @@ if dataset == 'bbc':
     dataset = 'data/bbc_csv/test.csv'
 elif dataset == 'ag_news':
     dataset = 'data/ag_news_csv/test.csv'
+elif dataset == 'reuters':
+    dataset = 'data/reuters_csv/test.csv'
 
 classifier = utils.load_classifier(path, Classifier)
 doc_list = load_csv(dataset, classifier.title_len, classifier.content_len)
 Xt, Xc, y, unk, total = get_mat(doc_list, classifier.word_to_index, classifier.title_len,
-                                classifier.content_len)
+                                classifier.content_len, len(classifier.classes))
 print('Evaluating...')
 acc, p, r, f1 = classifier.evaluate(Xt, Xc, y)
 for i in range(len(p)-1):

@@ -65,8 +65,8 @@ def load_classifier(directory, cls):
         return cls(word_vec, word_to_index, index_to_word, config['classes'], title_output=config['title_output'],
                    content_output=config['content_output'], dense_neurons=config['dense_neurons'],
                    title_len=config['title_len'], content_len=config['content_len'], weights=f1, directory=directory,
-                   gru_regularize=config['gru_reg'] if 'gru_reg' in config else 0,
-                   dense_regularize=config['dense_reg'] if 'dense_reg' in config else 0)
+                   gru_regularize=config.get('gru_reg', 0),
+                   dense_regularize=config.get('dense_reg', 0))
     except FileNotFoundError:
         print('One or more model files cannot be found. Terminating...')
         sys.exit()
@@ -99,6 +99,8 @@ def precision(preds, true, label):
             total_pos += 1.0
             if true[i] == label:
                 true_pos += 1.0
+    if total_pos == 0:
+        return None
     return true_pos/total_pos
 
 
@@ -109,8 +111,14 @@ def recall(preds, true, label):
             total_pos += 1.0
             if preds[i] == label:
                 true_pos += 1.0
+    if total_pos == 0:
+        return None
     return true_pos / total_pos
 
 
 def f1_score(p, r):
+    if p is None or r is None:
+        return None
+    if p == 0 and r == 0:
+        return 0
     return 2 * p * r / (p + r)

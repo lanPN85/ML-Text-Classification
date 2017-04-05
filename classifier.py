@@ -88,7 +88,7 @@ class Classifier:
                                  validation_data=([matrices['Xt_val'], matrices['Xc_val']], matrices['y_val']))
         return cb1.best_val_acc, history
 
-    def predict(self, title, content):
+    def predict(self, title, content, verbose=0):
         t = nltk.word_tokenize(title.lower())
         Xt = [self.word_to_index[word] if word in self.word_to_index
               else self.word_to_index[utils.UNKNOWN_TOKEN] for word in t][:self.title_len]
@@ -99,12 +99,12 @@ class Classifier:
         Xt = utils.pad_vec(Xt, self.title_len)
         Xc = utils.pad_vec(Xc, self.content_len)
 
-        probs = self.model.predict([Xt, Xc])
+        probs = self.model.predict([Xt, Xc], verbose=verbose)
         pred = np.argmax(probs)
         return pred, probs
 
     def evaluate(self, Xt, Xc, y):
-        probs = self.model.predict([Xt, Xc])
+        probs = self.model.predict([Xt, Xc], verbose=1, batch_size=100)
         preds = np.argmax(probs, axis=1)
         true = np.argmax(y, 1)
         acc = np.sum(np.equal(preds, true)) / np.size(true, 0)
@@ -113,9 +113,12 @@ class Classifier:
             p.append(utils.precision(preds, true, i))
             r.append(utils.recall(preds, true, i))
             f1.append(utils.f1_score(p[i], r[i]))
-        p.append(np.mean(p))
-        r.append(np.mean(r))
-        f1.append(np.mean(f1))
+        p2 = [x for x in p if x is not None]
+        r2 = [x for x in r if x is not None]
+        f2 = [x for x in f1 if x is not None]
+        p.append(np.mean(p2))
+        r.append(np.mean(r2))
+        f1.append(np.mean(f2))
         return acc, p, r, f1
 
 
@@ -136,7 +139,7 @@ class SaveCallback(Callback):
             self.best_val_acc = logs['val_acc']
 
             self.classifier.log('Save point:\nLoss: %s\tAccuracy: %s\n' % (logs['loss'], logs['acc']) +
-                                'Validation loss: %s\tValidation accuracy: %s\n' % (logs['val_loss'], logs['val_acc']))
+                                'Validation loss: %s\tValidation accuracy: %s\n' % (logs['val_loss'], logs['val_acc']), out=False)
         elif logs['val_loss'] > self.best_val_loss:
             print('No improvement on validation loss. Skipping save...')
         elif logs['loss'] > self.best_loss:

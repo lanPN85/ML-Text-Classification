@@ -65,7 +65,7 @@ def strat_sample(doc_list, class_count, train_ratio=0.8):
     return train_docs, val_docs
 
 
-def get_mat(doc_list, word_to_index, title_len, content_len, compress_labels=False):
+def get_mat(doc_list, word_to_index, title_len, content_len, num_classes, compress_labels=False):
     y = []
     Xt = np.zeros((len(doc_list), title_len), dtype=np.float32)
     Xc = np.zeros((len(doc_list), content_len), dtype=np.float32)
@@ -93,7 +93,7 @@ def get_mat(doc_list, word_to_index, title_len, content_len, compress_labels=Fal
 
     y = np.asarray(y, dtype=np.int32)
     if not compress_labels:
-        y = to_categorical(y, np.max(y)+1)
+        y = to_categorical(y, num_classes)
     return Xt, Xc, y, unk, total
 
 
@@ -109,9 +109,9 @@ def load_generic(vocabulary_size, title_len, content_len, path):
     train_docs, val_docs = strat_sample(docs, len(classes))
     test_docs = load_csv(path + '/test.csv', title_len, content_len)
 
-    Xt_train, Xc_train, y_train, unk1, total1 = get_mat(train_docs, word_to_index, title_len, content_len)
-    Xt_val, Xc_val, y_val, unk2, total2 = get_mat(val_docs, word_to_index, title_len, content_len)
-    Xt_test, Xc_test, y_test, unk3, total3 = get_mat(test_docs, word_to_index, title_len, content_len)
+    Xt_train, Xc_train, y_train, unk1, total1 = get_mat(train_docs, word_to_index, title_len, content_len, len(classes))
+    Xt_val, Xc_val, y_val, unk2, total2 = get_mat(val_docs, word_to_index, title_len, content_len, len(classes))
+    Xt_test, Xc_test, y_test, unk3, total3 = get_mat(test_docs, word_to_index, title_len, content_len, len(classes))
 
     unk, total = unk1 + unk2 + unk3, total1 + total2 + total3
     print('%d unknown tokens / %d tokens' % (unk, total))
@@ -130,3 +130,7 @@ def load_ag_news(vocabulary_size, title_len, content_len):
 
 def load_bbc(vocabulary_size, title_len, content_len):
     return load_generic(vocabulary_size, title_len, content_len, './data/bbc_csv')
+
+
+def load_reuters(vocabulary_size, title_len, content_len):
+    return load_generic(vocabulary_size, title_len, content_len, './data/reuters_csv')
