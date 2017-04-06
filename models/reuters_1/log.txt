@@ -1,0 +1,70 @@
+Save point:
+Loss: 2.0066840475	Accuracy: 0.511812297585
+Validation loss: 1.74134939275	Validation accuracy: 0.585903075973
+
+Save point:
+Loss: 1.4637666443	Accuracy: 0.640453078793
+Validation loss: 1.60190564188	Validation accuracy: 0.616110767112
+
+Save point:
+Loss: 1.21625218384	Accuracy: 0.694336572704
+Validation loss: 1.37452879981	Validation accuracy: 0.65449968016
+
+Save point:
+Loss: 1.04565310382	Accuracy: 0.730744337573
+Validation loss: 1.25210914363	Validation accuracy: 0.694147266743
+
+Save point:
+Loss: 0.938402051293	Accuracy: 0.751618122206
+Validation loss: 1.13795425578	Validation accuracy: 0.716803018029
+
+Save point:
+Loss: 0.829735023883	Accuracy: 0.779773462359
+Validation loss: 1.10994204611	Validation accuracy: 0.723725613106
+
+Save point:
+Loss: 0.740022574235	Accuracy: 0.802103560141
+Validation loss: 1.05970703175	Validation accuracy: 0.747640027086
+
+Save point:
+Loss: 0.656393817038	Accuracy: 0.822006472878
+Validation loss: 1.01224766601	Validation accuracy: 0.762743862828
+
+Save point:
+Loss: 0.50942202168	Accuracy: 0.855016183892
+Validation loss: 0.951645298376	Validation accuracy: 0.767778478943
+
+Save point:
+Loss: 0.379902257069	Accuracy: 0.890614888043
+Validation loss: 0.92305537565	Validation accuracy: 0.774701071768
+
+GRU_Regularizer: 0.0 --- Dense Regularizer: 0.0
+Test loss: 0.97006244862 --- Test acc: 0.77799867063
+
+Save point:
+Loss: 0.646364657335	Accuracy: 0.878317152605
+Validation loss: 1.05902190671	Validation accuracy: 0.777847698569
+
+Save point:
+Loss: 0.595844614467	Accuracy: 0.889805826362
+Validation loss: 1.03940604827	Validation accuracy: 0.782252988214
+
+Save point:
+Loss: 0.463145762393	Accuracy: 0.925242718562
+Validation loss: 1.0209787892	Validation accuracy: 0.79169288317
+
+GRU_Regularizer: 0.0 --- Dense Regularizer: 0.003
+Test loss: 1.02478905982 --- Test acc: 0.791915173974
+
+GRU_Regularizer: 0.0 --- Dense Regularizer: 0.01
+Test loss: 1.00078279093 --- Test acc: 0.793903243678
+
+GRU_Regularizer: 0.003 --- Dense Regularizer: 0.0
+Test loss: 1.26348848705 --- Test acc: 0.761762754373
+
+GRU_Regularizer: 0.003 --- Dense Regularizer: 0.003
+Test loss: 1.36152307777 --- Test acc: 0.739562623622
+
+GRU_Regularizer: 0.003 --- Dense Regularizer: 0.01
+Test loss: 1.34893034795 --- Test acc: 0.744201456843
+
