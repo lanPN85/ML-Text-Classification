@@ -119,7 +119,12 @@ class Classifier:
         p.append(np.mean(p2))
         r.append(np.mean(r2))
         f1.append(np.mean(f2))
-        return acc, p, r, f1
+
+        print('\nCalculating loss...')
+        self.compile()
+        loss = self.model.evaluate([Xt, Xc], y, batch_size=10)[0]
+
+        return acc, p, r, f1, loss
 
 
 class SaveCallback(Callback):

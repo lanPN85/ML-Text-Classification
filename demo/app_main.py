@@ -7,6 +7,7 @@ from classifier import Classifier
 import utils
 import matplotlib
 import heapq
+import os
 import numpy as np
 
 matplotlib.use('Agg')
@@ -35,12 +36,13 @@ class NewsClassifier(App):
         plt.close()
         plt.title('Prediction breakdown')
         plt.xlim(0.0, 1.0)
-        plt.xticks(np.linspace(0, 1, 11))
+        plt.xticks(np.linspace(0, 1.1, 12))
         plt.xlabel('Confidence')
 
         plt.ylabel('Class')
 
     def empty_graph(self):
+        self.root.graph.nocache = True
         self.init_graph()
         short_list = [''] + self.classifier.classes[:7] + ['']
         plt.ylim(0, len(short_list) - 1)
@@ -56,24 +58,30 @@ class NewsClassifier(App):
 
         plt.yticks(range(len(top_labels)), top_labels)
         for i in range(1, len(top_labels)-1):
-            plt.plot([0, labels_to_val[top_labels[i]]], [i, i], linewidth=20, label=str(labels_to_val[top_labels[i]]))
+            plt.plot([0, labels_to_val[top_labels[i]]], [i, i], linewidth=20)
 
         plt.savefig('./current.png')
 
     def get_prediction(self):
+        if self.classifier is None:
+            return
         title = self.root.title_inp.text
         content = self.root.content_inp.text
         pred, probs = self.classifier.predict(title, content)
 
+        self.root.graph.source = './current_empty.png'
         self.plot_result(probs)
-        self.root.graph.source = './current.png'
         self.root.pred_res.text = self.classifier.classes[pred]
-
         self.empty_graph()
+        self.root.graph.source = './current.png'
 
     def clear_text(self):
         if self.classifier is not None:
+            self.empty_graph()
+            if os.path.exists('./current.png'):
+                os.remove('./current.png')
             self.root.pred_res.text = ''
+
             self.root.graph.source = './current_empty.png'
 
     def load_classifier(self):
