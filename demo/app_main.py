@@ -38,7 +38,6 @@ class NewsClassifier(App):
         plt.xlim(0.0, 1.0)
         plt.xticks(np.linspace(0, 1.1, 12))
         plt.xlabel('Confidence')
-
         plt.ylabel('Class')
 
     def empty_graph(self):
@@ -47,7 +46,7 @@ class NewsClassifier(App):
         short_list = [''] + self.classifier.classes[:7] + ['']
         plt.ylim(0, len(short_list) - 1)
         plt.yticks(range(len(short_list)), short_list)
-        plt.savefig('./current_empty.png')
+        plt.savefig('./.demo/current_empty.png')
 
     def plot_result(self, probs):
         top7 = heapq.nlargest(7, range(len(probs[0])), probs[0].take)[::-1]
@@ -60,7 +59,7 @@ class NewsClassifier(App):
         for i in range(1, len(top_labels)-1):
             plt.plot([0, labels_to_val[top_labels[i]]], [i, i], linewidth=20)
 
-        plt.savefig('./current.png')
+        plt.savefig('./.demo/current.png')
 
     def get_prediction(self):
         if self.classifier is None:
@@ -69,26 +68,26 @@ class NewsClassifier(App):
         content = self.root.content_inp.text
         pred, probs = self.classifier.predict(title, content)
 
-        self.root.graph.source = './current_empty.png'
+        self.root.graph.source = './.demo/current_empty.png'
         self.plot_result(probs)
         self.root.pred_res.text = self.classifier.classes[pred]
         self.empty_graph()
-        self.root.graph.source = './current.png'
+        self.root.graph.source = './.demo/current.png'
 
     def clear_text(self):
         if self.classifier is not None:
             self.empty_graph()
-            if os.path.exists('./current.png'):
-                os.remove('./current.png')
+            if os.path.exists('./.demo/current.png'):
+                os.remove('./.demo/current.png')
             self.root.pred_res.text = ''
 
-            self.root.graph.source = './current_empty.png'
+            self.root.graph.source = './.demo/current_empty.png'
 
     def load_classifier(self):
         path = self.root.chooser.selection[0]
         self.classifier = utils.load_classifier(path, Classifier)
         self.empty_graph()
-        self.root.graph.source = './current_empty.png'
+        self.root.graph.source = './.demo/current_empty.png'
 
         with open(path + '/settings.py', 'rt') as f:
             conf = f.readlines()

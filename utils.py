@@ -1,9 +1,14 @@
+# Setup proper keras environment
+import os
+os.environ['KERAS_BACKEND'] = 'theano'
+import keras
+keras.backend.set_image_dim_ordering('th')
+
 from keras.utils.np_utils import to_categorical
 
 import pickle
 import sys
 import numpy as np
-
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt

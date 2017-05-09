@@ -1,3 +1,9 @@
+# Setup proper keras environment
+import os
+os.environ['KERAS_BACKEND'] = 'theano'
+import keras
+keras.backend.set_image_dim_ordering('th')
+
 from keras.layers.recurrent import GRU
 from keras.layers.core import Dense
 from keras.engine import merge
@@ -11,6 +17,8 @@ from keras.regularizers import WeightRegularizer
 import utils
 import nltk
 import numpy as np
+
+nltk.data.path.append('./data')
 
 
 class Classifier:

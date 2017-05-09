@@ -1,3 +1,4 @@
 /.idea/
 /__pycache__/
 /data/glove.6B.*
+/*/__pycache__/

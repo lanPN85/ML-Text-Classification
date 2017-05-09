@@ -1,3 +1,9 @@
+# Setup proper keras environment
+import os
+os.environ['KERAS_BACKEND'] = 'theano'
+import keras
+keras.backend.set_image_dim_ordering('th')
+
 import csv
 import numpy as np
 import utils
@@ -5,6 +11,8 @@ import nltk
 import random
 from glove import Glove
 from keras.utils.np_utils import to_categorical
+
+nltk.data.path.append('./data')
 
 
 def load_embedding(vocabulary_size):
@@ -22,10 +30,6 @@ def load_embedding(vocabulary_size):
     embed_layer = np.vstack((np.zeros((1, word_dim), dtype=np.float32), embed_layer))
     # Random vector for UNKNOWN_TOKEN, placed intentionally far away from vocabulary words
     embed_layer = np.vstack((embed_layer, np.asarray(np.random.uniform(20.0, 50.0, (1, word_dim)), dtype=np.float32)))
-
-    assert np.size(embed_layer, 0) == vocabulary_size + 2
-    assert len(index_to_word) == vocabulary_size + 2
-    assert word_to_index[utils.UNKNOWN_TOKEN] == vocabulary_size + 1
 
     return embed_layer, word_to_index, index_to_word
 
