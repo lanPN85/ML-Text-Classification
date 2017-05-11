@@ -1,7 +1,11 @@
 # Setup proper keras environment
 import os
+
+import pickle
+
 os.environ['KERAS_BACKEND'] = 'theano'
 import keras
+
 keras.backend.set_image_dim_ordering('th')
 
 from keras.layers.recurrent import GRU
@@ -16,12 +20,33 @@ from keras.regularizers import WeightRegularizer
 
 import utils
 import nltk
+import sys
 import numpy as np
 
 nltk.data.path.append('./data')
 
 
 class Classifier:
+    """
+    Container class for a full document classifier. An instance of this class should be enough to train on and predict any two-input document.
+    
+    Attributes:
+        word_vec: A word vector matrix for the embedding layer, where each row represents a word.
+        word_to_index: A dictionary that maps each word to its corresponding position in the word_vec matrix.
+        index_to_word: A list that aps each index to its word. Corresponds to word_to_index.
+        classes: A list of strings that names each of the topics in the order of the dataset that the classifier's trained on.
+        title_output: The number of neurons of the GRU layer that processes document title.
+        content_output: The number of neurons of the GRU layer that processes document content.
+        dense_neurons: The number of neurons for each of the dense layers. One layer is implicitly added on top as the output layer.
+        title_len: The standardized length of documents' title.
+        content_len: The standardized length of documents' content.
+        weights: A file object that reads a HDF5 file which contains the saved weights of a trained model. Used for loading.
+        directory: The path of the directory where the model, log files and plots should be kept.
+        gru_regularize: The lambda value for L2 regularization in the 2 GRU layers.
+        dense_regularize: The lambda value for L2 regularization in all dense layers.
+        
+    """
+
     def __init__(self, word_vec, word_to_index, index_to_word, classes, title_output=128, content_output=512,
                  dense_neurons=(1024, 256,), title_len=50, content_len=2000, weights=None, directory='.',
                  gru_regularize=0, dense_regularize=0):
@@ -60,6 +85,8 @@ class Classifier:
 
         # Merge vectors to create output
         doc_vec = merge(inputs=[title_vec, content_vec], mode='concat')
+
+        # Decode using dense layers
         self.decoder = Sequential(name='Decoder')
         self.decoder.add(Dense(dense_neurons[0], input_shape=(title_output + content_output,),
                                name='Dense_0', activation='hard_sigmoid'))
@@ -74,18 +101,32 @@ class Classifier:
         if weights is not None:
             self.model.load_weights(weights)
 
-    def log(self, str, out=True):
+    def log(self, string, out=True):
+        """
+        Utility method for logging to the model's log file and printing to stdout if needed 
+        :param out: Whether there should be output to stdout 
+        """
         with open(self.directory + '/log.txt', 'at') as f:
-            f.write(str + '\n')
+            f.write(string + '\n')
             f.close()
         if out:
-            print(str)
+            print(string)
 
     def compile(self, optimizer=RMSprop, learning_rate=0.0001):
+        """
+        Simple wrapper for compiling the model.
+        :param optimizer: Function pointer to a Keras optimizer or custom optimizer function
+        """
         self.model.compile(loss='categorical_crossentropy', optimizer=optimizer(lr=learning_rate),
                            metrics=['accuracy'])
 
     def train(self, matrices, nb_epoch, prev_val_acc=0.0, batch_size=20):
+        """
+        Wrapper for training the classifier's model.
+        :param matrices: A dictionary containing the required matrices for training.
+        :param prev_val_acc: The highest validation accuracy value from every previous training iterations. Used for optimzing between different training phases.
+        :return: The best validation accuracy after training and a Keras History object for plotting.
+        """
         cb1 = SaveCallback(self, prev_val_acc)
         cb2 = EarlyStopping(monitor='val_loss', verbose=1, patience=4, mode='auto')
         cb3 = EarlyStopping(monitor='loss', verbose=1, patience=0, mode='auto')
@@ -97,6 +138,13 @@ class Classifier:
         return cb1.best_val_acc, history
 
     def predict(self, title, content, verbose=0):
+        """
+        Predicts the topic of a pair of document title-content.
+        :param title: The document's title.
+        :param content: The document's content
+        :param verbose: Passed to model.predict() to decide stdout output 
+        :return: The index of the predicted topic and the probability distribution of every topic.
+        """
         t = nltk.word_tokenize(title.lower())
         Xt = [self.word_to_index[word] if word in self.word_to_index
               else self.word_to_index[utils.UNKNOWN_TOKEN] for word in t][:self.title_len]
@@ -112,6 +160,13 @@ class Classifier:
         return pred, probs
 
     def evaluate(self, Xt, Xc, y):
+        """
+        Evaluates the model's accuracy, precision, recall, F1 score and loss value on a dataset.
+        :param Xt: Matrix containing title input.
+        :param Xc: Matrix containing content input.
+        :param y: Label vector.
+        :return: Accuracy, lists containing each topic's precision, recall, F1 score followed by the macro-average across topics, and the model's loss value.
+        """
         probs = self.model.predict([Xt, Xc], verbose=1, batch_size=100)
         preds = np.argmax(probs, axis=1)
         true = np.argmax(y, 1)
@@ -130,9 +185,54 @@ class Classifier:
 
         print('\nCalculating loss...')
         self.compile()
-        loss = self.model.evaluate([Xt, Xc], y, batch_size=10)[0]
+        loss = self.model.evaluate([Xt, Xc], y, batch_size=100)[0]
 
         return acc, p, r, f1, loss
+
+    def save(self):
+        f1 = self.directory + '/weights.hdf5'
+        f2 = self.directory + '/config.pkl'
+        f3 = self.directory + '/dictionary.npz'
+
+        config = {'title_output': self.title_output,
+                  'content_output': self.content_output,
+                  'dense_neurons': self.dense_neurons,
+                  'title_len': self.title_len,
+                  'content_len': self.content_len,
+                  'classes': self.classes,
+                  'word_vec_dim': np.shape(self.word_vec),
+                  'gru_reg': self.gru_regularize,
+                  'dense_reg': self.dense_regularize}
+
+        self.model.save_weights(f1)
+        pickle.dump(config, open(f2, 'wb'), pickle.HIGHEST_PROTOCOL)
+        np.savez(f3, wit=self.word_to_index, itw=self.index_to_word,
+                 wv=self.word_vec)
+        print('Saved model to %s.' % self.directory)
+
+    @staticmethod
+    def load(directory):
+        f1 = directory + '/weights.hdf5'
+        f2 = directory + '/config.pkl'
+        f3 = directory + '/dictionary.npz'
+
+        print('Loading model from %s...' % directory)
+        try:
+            config = pickle.load(open(f2, 'rb'))
+            npz_file = np.load(f3)
+
+            word_to_index, index_to_word, word_vec = npz_file["wit"].reshape(1)[0], npz_file["itw"], npz_file[
+                "wv"].reshape(config['word_vec_dim'])
+            print('Done.')
+            return Classifier(word_vec, word_to_index, index_to_word, config['classes'],
+                              title_output=config['title_output'],
+                              content_output=config['content_output'], dense_neurons=config['dense_neurons'],
+                              title_len=config['title_len'], content_len=config['content_len'], weights=f1,
+                              directory=directory, gru_regularize=config.get('gru_reg', 0),
+                              dense_regularize=config.get('dense_reg', 0))
+        except FileNotFoundError:
+            print('One or more model files cannot be found. Terminating...')
+            sys.exit()
 
 
 class SaveCallback(Callback):
@@ -146,13 +246,14 @@ class SaveCallback(Callback):
     def on_epoch_end(self, epoch, logs=None):
         print()
         if logs['val_loss'] <= self.best_val_loss and logs['loss'] <= self.best_loss and logs['val_acc'] >= self.best_val_acc:
-            utils.save_classifier(self.classifier, self.classifier.directory)
+            self.classifier.save()
             self.best_val_loss = logs['val_loss']
             self.best_loss = logs['loss']
             self.best_val_acc = logs['val_acc']
 
             self.classifier.log('Save point:\nLoss: %s\tAccuracy: %s\n' % (logs['loss'], logs['acc']) +
-                                'Validation loss: %s\tValidation accuracy: %s\n' % (logs['val_loss'], logs['val_acc']), out=False)
+                                'Validation loss: %s\tValidation accuracy: %s\n' % (logs['val_loss'], logs['val_acc']),
+                                out=False)
         elif logs['val_loss'] > self.best_val_loss:
             print('No improvement on validation loss. Skipping save...')
         elif logs['loss'] > self.best_loss:
@@ -171,7 +272,7 @@ class TestCallback(Callback):
 
     def on_train_end(self, logs=None):
         print('Evaluating on test set...')
-        result = self.classifier.model.evaluate([self.Xt, self.Xc], self.y, batch_size=10)
+        result = self.classifier.model.evaluate([self.Xt, self.Xc], self.y, batch_size=100)
         self.classifier.log('GRU_Regularizer: %s --- Dense Regularizer: %s' %
                             (self.classifier.gru_regularize, self.classifier.dense_regularize))
         self.classifier.log('Test loss: %s --- Test acc: %s\n' % (result[0], result[1]))

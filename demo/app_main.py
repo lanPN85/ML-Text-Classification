@@ -66,7 +66,7 @@ class NewsClassifier(App):
             return
         title = self.root.title_inp.text
         content = self.root.content_inp.text
-        pred, probs = self.classifier.predict(title, content)
+        pred, probs = self.classifier.predict(title, content, verbose=1)
 
         self.root.graph.source = './.demo/current_empty.png'
         self.plot_result(probs)
@@ -85,7 +85,7 @@ class NewsClassifier(App):
 
     def load_classifier(self):
         path = self.root.chooser.selection[0]
-        self.classifier = utils.load_classifier(path, Classifier)
+        self.classifier = Classifier.load(path)
         self.empty_graph()
         self.root.graph.source = './.demo/current_empty.png'
 

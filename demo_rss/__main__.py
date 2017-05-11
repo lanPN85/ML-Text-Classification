@@ -11,7 +11,7 @@ feed_list = [
 ]
 filepath = './demo_rss/results.csv'
 model = sys.argv[1]
-classifier = utils.load_classifier(model, Classifier)
+classifier = Classifier.load(model)
 
 for feed in feed_list:
     print('Parsing %s...' % feed)

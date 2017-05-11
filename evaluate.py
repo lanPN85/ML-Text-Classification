@@ -4,8 +4,6 @@ os.environ['KERAS_BACKEND'] = 'theano'
 import keras
 keras.backend.set_image_dim_ordering('th')
 
-import sys
-
 from data_utils import *
 from classifier import *
 
@@ -18,7 +16,7 @@ elif dataset == 'ag_news':
 elif dataset == 'reuters':
     dataset = 'data/reuters_csv/test.csv'
 
-classifier = utils.load_classifier(path, Classifier)
+classifier = Classifier.load(path)
 doc_list = load_csv(dataset, classifier.title_len, classifier.content_len)
 Xt, Xc, y, unk, total = get_mat(doc_list, classifier.word_to_index, classifier.title_len,
                                 classifier.content_len, len(classifier.classes))
@@ -30,8 +28,8 @@ for i in range(len(p)-1):
     print('F1 Score: %s' % f1[i])
     print('------')
 
-print('Mean Precision: %s' % p[-1])
-print('Mean Recall: %s' % r[-1])
-print('Mean F1: %s' % f1[-1])
+print('Macro-averaged Precision: %s' % p[-1])
+print('Macro-averaged Recall: %s' % r[-1])
+print('Macro-averaged F1: %s' % f1[-1])
 print('Loss: %s' % loss)
 print('Accuracy: %s' % acc)
