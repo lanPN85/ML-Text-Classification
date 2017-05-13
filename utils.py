@@ -14,14 +14,14 @@ def pad_vec(vec, length):
     return r
 
 
-def plot_training(path, history, gru_lambda, dense_lambda):
+def plot_training(path, history):
     plt.title('Model Loss')
     plt.ylabel('Loss')
     plt.xlabel('Epoch')
     plt.plot(history.history['loss'])
     plt.plot(history.history['val_loss'])
     plt.legend(['Training set', 'Validation set'], loc='upper right')
-    plt.savefig(path + '/loss_%s_%s.png' % (gru_lambda, dense_lambda))
+    plt.savefig(path + '/loss.png')
     plt.close()
 
     plt.title('Model Accuracy')
@@ -30,7 +30,7 @@ def plot_training(path, history, gru_lambda, dense_lambda):
     plt.plot(history.history['acc'])
     plt.plot(history.history['val_acc'])
     plt.legend(['Training set', 'Validation set'], loc='lower right')
-    plt.savefig(path + '/acc_%s_%s.png' % (gru_lambda, dense_lambda))
+    plt.savefig(path + '/acc.png')
     plt.close()
 
 

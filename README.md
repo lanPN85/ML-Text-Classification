@@ -8,7 +8,7 @@ Chạy lệnh `(sudo) pip install glove-python keras==1.2.2 h5py matplotlib nltk
 - Để bổ sung tính năng xử lý bằng card đồ họa (không bắt buộc, giúp tăng tốc quá trình học và dự đoán), cài đặt thư viện CUDA (dành cho GPU [NVIDIA](https://developer.nvidia.com/cuda-downloads)) và làm theo hướng dẫn tại [đây](http://deeplearning.net/software/theano/tutorial/using_gpu.html).
 
 ### Triển khai
-- Để tiến hành huấn luyện, sử dụng lệnh: `python train.py ([tên_mô_hình])`. Các tùy chọn của quá trình huấn luyện có thể được điều chỉnh trong settings.py. Các mô hình sẽ được lưu vào thư mục models/ với tên được chọn hoặc dưới định dạng `[dataset]_[năm-tháng-ngày]`. Thư mục bao gồm cả các log huấn luyện và đồ thị kết quả.
+- Để tiến hành huấn luyện, sử dụng lệnh: `python train.py ([tên_mô_hình])`. Các tùy chọn của quá trình huấn luyện có thể được điều chỉnh trong settings.py. Các mô hình sẽ được lưu vào thư mục models/ với tên được chọn hoặc dưới định dạng `[dataset]_[danh_sách_neuron_FC]`. Thư mục bao gồm cả các log huấn luyện và đồ thị kết quả.
 - Để chạy đánh giá một mô hình đã huấn luyện (Precision, Recall, F1), sử dụng lệnh `python evaluate.py [đường_dẫn_đến_mô_hình] [tên_dataset]`.
 - Để chạy demo đồ họa, sử dụng lệnh `python -m demo`.
 - Để thực hiện dự đoán trên feed RSS, chạy `python -m demo_rss [đường_dẫn_đến_mô_hình]`. Kết quả dự đoán sẽ được lưu trong demo_rss/results.csv.

@@ -1,0 +1,14 @@
+Save point:
+Loss: 0.337551988414	Accuracy: 0.880709808464
+Validation loss: 0.254544855837	Validation accuracy: 0.909146887061
+
+Save point:
+Loss: 0.218831293534	Accuracy: 0.923057547027
+Validation loss: 0.235622503934	Validation accuracy: 0.918831170953
+
+Save point:
+Loss: 0.170165487112	Accuracy: 0.939977051232
+Validation loss: 0.210800417522	Validation accuracy: 0.926276312646
+
+Test loss: 0.433896879976 --- Test acc: 0.91504702436
+

@@ -1,0 +1,44 @@
+Save point:
+Loss: 1.50792183675	Accuracy: 0.464788734703
+Validation loss: 1.01396815884	Validation accuracy: 0.655462202906
+
+Save point:
+Loss: 0.418056755419	Accuracy: 0.862676055499
+Validation loss: 0.645827855049	Validation accuracy: 0.781512603372
+
+Save point:
+Loss: 0.119913352562	Accuracy: 0.95845071027
+Validation loss: 0.446843760688	Validation accuracy: 0.87114845905
+
+Save point:
+Loss: 0.0104094825187	Accuracy: 0.998591550639
+Validation loss: 0.400303232653	Validation accuracy: 0.899159658022
+
+Test loss: 0.681168987447 --- Test acc: 0.84116332563
+
+Save point:
+Loss: 1.33099657297	Accuracy: 0.469014082156
+Validation loss: 0.932754511593	Validation accuracy: 0.638655456842
+
+Save point:
+Loss: 0.669705084092	Accuracy: 0.783098582651
+Validation loss: 0.511438805349	Validation accuracy: 0.820728290482
+
+Save point:
+Loss: 0.376342680463	Accuracy: 0.876056341218
+Validation loss: 0.452032853993	Validation accuracy: 0.848739487951
+
+Save point:
+Loss: 0.268806635704	Accuracy: 0.91338029126
+Validation loss: 0.415975116548	Validation accuracy: 0.871148474243
+
+Save point:
+Loss: 0.176797832087	Accuracy: 0.94718310195
+Validation loss: 0.265120767412	Validation accuracy: 0.910364147328
+
+Save point:
+Loss: 0.0569398780157	Accuracy: 0.980985925231
+Validation loss: 0.183282713304	Validation accuracy: 0.93837537101
+
+Test loss: 0.232448884005 --- Test acc: 0.928411642444
+
