@@ -15,6 +15,7 @@ from settings import *
 from shutil import copy2
 
 
+# Get loader function for specified dataset
 if DATASET == 'ag_news':
     loader = load_ag_news
 elif DATASET == 'bbc':
@@ -24,18 +25,20 @@ elif DATASET == 'reuters':
 else:
     raise ValueError('Invalid dataset')
 
+# Set up the model's directory for saving and logging
+# Allow override via command line argument
 if len(sys.argv) > 1:
     DIRECTORY = './models/' + sys.argv[1]
 else:
     DIRECTORY = "./models/%s_%s" % (DATASET, DENSE_NEURONS)
-
 if not os.path.exists(DIRECTORY):
     os.makedirs(DIRECTORY)
     os.makedirs(DIRECTORY + '/plots')
-
 copy2('./settings.py', '%s/settings.py' % DIRECTORY)
 
+print('Loading data...')
 matrices, word_vec, word_to_index, index_to_word, classes = loader(VOCABULARY_SIZE, TITLE_LEN, CONTENT_LEN)
+
 start_time = timer()
 
 print('Creating model...')

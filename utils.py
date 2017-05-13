@@ -8,6 +8,12 @@ UNKNOWN_TOKEN = 'UNKNOWN_TOKEN'
 
 
 def pad_vec(vec, length):
+    """
+    Pads a vector to a specified length
+    :param vec: the original vector, must not be longer than length
+    :param length: the desired length
+    :return: the padded vector
+    """
     r = np.zeros((1, length))
     for i, v in enumerate(vec):
         r[0][i] = v
@@ -15,6 +21,12 @@ def pad_vec(vec, length):
 
 
 def plot_training(path, history):
+    """
+    Plots loss and accuracy throughout training phase.
+    :param path: the existing directory to save the plots to
+    :param history: the History object created by model.fit().
+    :return: None
+    """
     plt.title('Model Loss')
     plt.ylabel('Loss')
     plt.xlabel('Epoch')
@@ -35,6 +47,13 @@ def plot_training(path, history):
 
 
 def precision(preds, true, label):
+    """
+    Calculates preision over a given label.
+    :param preds: vector containing prediction labels.
+    :param true: vector containing true labels.
+    :param label: the label to calculate on
+    :return: the label's precision.
+    """
     true_pos, total_pos = 0.0, 0.0
     for i in range(len(true)):
         if preds[i] == label:
@@ -47,6 +66,13 @@ def precision(preds, true, label):
 
 
 def recall(preds, true, label):
+    """
+    Calculates recall over a given label.
+    :param preds: vector containing prediction labels.
+    :param true: vector containing true labels.
+    :param label: the label to calculate on
+    :return: the label's recall.
+    """
     true_pos, total_pos = 0.0, 0.0
     for i in range(len(true)):
         if true[i] == label:
@@ -59,6 +85,11 @@ def recall(preds, true, label):
 
 
 def f1_score(p, r):
+    """
+    Calculates the F1 score with the given precision and recall.
+    :param p: Precision
+    :param r: Recall
+    """
     if p is None or r is None:
         return None
     if p == 0 and r == 0:

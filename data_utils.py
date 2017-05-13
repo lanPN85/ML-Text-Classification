@@ -16,6 +16,11 @@ nltk.data.path.append('./data')
 
 
 def load_embedding(vocabulary_size):
+    """
+    Loads part of the GloVe word embedding 
+    :param vocabulary_size: The number of words to load to memory.
+    :return: The word vector matrix, a word-index mapping and an index-word mapping
+    """
     print("Loading word embedding...")
     embed = Glove.load_stanford('data/glove.6B.100d.txt')
     embed_layer = np.asarray(embed.word_vectors[:vocabulary_size, :], dtype=np.float32)
@@ -35,6 +40,13 @@ def load_embedding(vocabulary_size):
 
 
 def load_csv(filename, title_len, content_len):
+    """
+    Loads documents from a project-standard CSV file.
+    :param filename: The path to a 3-column CSV file containing label, title, content for each document.
+    :param title_len: The standardized length for titles.
+    :param content_len: The standardized length for contents.
+    :return: A list of dictionaries containing the following keys: 'class', 'title' and 'content'
+    """
     print('Reading %s...' % filename)
     f = open(filename, 'rt')
     reader = csv.reader(f, delimiter=',', quotechar='"')
@@ -51,6 +63,12 @@ def load_csv(filename, title_len, content_len):
 
 
 def strat_sample(doc_list, class_count, train_ratio=0.8):
+    """
+    Splits the given document list into a train set and a validation set while maintaining the class ratio.
+    :param doc_list: A list of documents as created by load_csv()
+    :param class_count: The number of classes in the dataset
+    :param train_ratio: The ratio of the created training set.
+    """
     s = [[]] * class_count
     train_docs, val_docs = [], []
     for doc in doc_list:
@@ -69,7 +87,12 @@ def strat_sample(doc_list, class_count, train_ratio=0.8):
     return train_docs, val_docs
 
 
-def get_mat(doc_list, word_to_index, title_len, content_len, num_classes, compress_labels=False):
+def get_mat(doc_list, word_to_index, title_len, content_len, num_classes):
+    """
+    Converts the document list into NumPy arrays for training
+    :param word_to_index: A word-index mapping dictionary
+    :return: Title array, content array, label vector, number of unknown tokens, number of tokens
+    """
     y = []
     Xt = np.zeros((len(doc_list), title_len), dtype=np.float32)
     Xc = np.zeros((len(doc_list), content_len), dtype=np.float32)
@@ -96,12 +119,20 @@ def get_mat(doc_list, word_to_index, title_len, content_len, num_classes, compre
             Xc[i][j] = idx
 
     y = np.asarray(y, dtype=np.int32)
-    if not compress_labels:
-        y = to_categorical(y, num_classes)
+    y = to_categorical(y, num_classes)
+
     return Xt, Xc, y, unk, total
 
 
 def load_generic(vocabulary_size, title_len, content_len, path):
+    """
+    Loads a dataset into memory
+    :param vocabulary_size: Number of words in vocabulary
+    :param path: Directory containing the dataset in 3 files: train.csv, test.csv, classes.txt
+    :return: Dictionary containing keys to matrices ('Xt_train', 'Xc_train', 'y_train', 
+    'Xc_val', 'Xt_val', 'y_val', 'Xt_test', 'Xc_test', 'y_test'), a word vector matrix, a word-index mapping,
+    an index-word mapping and a list of classes
+    """
     with open(path + '/classes.txt', 'rt') as f:
         classes = f.readlines()
         for i in range(len(classes)):
@@ -129,12 +160,21 @@ def load_generic(vocabulary_size, title_len, content_len, path):
 
 
 def load_ag_news(vocabulary_size, title_len, content_len):
+    """
+    Wrapper function of load_generic for AG-News dataset.
+    """
     return load_generic(vocabulary_size, title_len, content_len, './data/ag_news_csv')
 
 
 def load_bbc(vocabulary_size, title_len, content_len):
+    """
+    Wrapper function of load_generic for BBC dataset.
+    """
     return load_generic(vocabulary_size, title_len, content_len, './data/bbc_csv')
 
 
 def load_reuters(vocabulary_size, title_len, content_len):
+    """
+    Wrapper function of load_generic for Reuters dataset.
+    """
     return load_generic(vocabulary_size, title_len, content_len, './data/reuters_csv')

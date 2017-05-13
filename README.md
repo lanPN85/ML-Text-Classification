@@ -10,7 +10,7 @@ Chạy lệnh `(sudo) pip install glove-python keras==1.2.2 h5py matplotlib nltk
 ### Triển khai
 - Để tiến hành huấn luyện, sử dụng lệnh: `python train.py ([tên_mô_hình])`. Các tùy chọn của quá trình huấn luyện có thể được điều chỉnh trong settings.py. Các mô hình sẽ được lưu vào thư mục models/ với tên được chọn hoặc dưới định dạng `[dataset]_[danh_sách_neuron_FC]`. Thư mục bao gồm cả các log huấn luyện và đồ thị kết quả.
 - Để chạy đánh giá một mô hình đã huấn luyện (Precision, Recall, F1), sử dụng lệnh `python evaluate.py [đường_dẫn_đến_mô_hình] [tên_dataset]`.
-- Để chạy demo đồ họa, sử dụng lệnh `python -m demo`.
+- Để chạy demo đồ họa, sử dụng lệnh `python -m demo`. Chọn thư mục chứa mô hình muốn sử dụng trong ô chọn File bên phải giao diện (VD ag_news_[125]) và chọn load. Nhập tiêu đề và nội dung của văn bản cần phân loại vào các ô tương ứng phía bên trái và chọn Classify.
 - Để thực hiện dự đoán trên feed RSS, chạy `python -m demo_rss [đường_dẫn_đến_mô_hình]`. Kết quả dự đoán sẽ được lưu trong demo_rss/results.csv.
 
 ### Dataset
