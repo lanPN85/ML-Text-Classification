@@ -1,6 +1,5 @@
 # Setup proper keras environment
 import os
-import pickle
 os.environ['KERAS_BACKEND'] = 'theano'
 import keras
 keras.backend.set_image_dim_ordering('th')
@@ -15,6 +14,7 @@ from keras.layers import Input
 from keras.callbacks import Callback, EarlyStopping, CSVLogger
 
 import utils
+import pickle
 import nltk
 import sys
 import numpy as np
